@@ -137,13 +137,31 @@ class Plant:
 
         return self.__materials_dict
 
+    @property
+    def neosintez_material_amount(self):
+        return len(self.__materials_dict)
+
+    @staticmethod
+    def __get_value(attributes: dict, attribute_id: str, ref=False, type='str'):
+        result = attributes.get(attribute_id, None)
+        if result:
+            if not ref:
+                return attributes[attribute_id]['Value']
+            else:
+                return attributes[attribute_id]['Value']['Name']
+        else:
+            if type=='int':
+                return 0
+            else:
+                return ''
+
     def create_materials(self):
         for material in self.__materials_dict:
             attributes = material['Object']['Attributes']
-            name = attributes[name_attribute_id]['Value']
-            amount = attributes[amount_attribute_id]['Value']
-            line = attributes[line_attribute_id]['Value']['Name']
-            title = attributes[title_attribute_id]['Value']
+            name = self.__get_value(attributes, name_attribute_id)
+            amount = self.__get_value(attributes, amount_attribute_id, type='int')
+            line = self.__get_value(attributes, line_attribute_id, ref=True)
+            title = self.__get_value(attributes, title_attribute_id)
             new_material = Material(name, amount, line, title, attributes)
             if new_material in self.materials:
                 index = self.materials.index(new_material)
@@ -323,7 +341,8 @@ class Material:
         result = cursor.fetchall()
         if len(result):
             self.exist = True
-            print(f"Материал найден в Адепт {self.name} {self.line}", file=log)
+            print(f"Материал найден в Адепт {self.name} {self.line}")
+
         else:
             self.exist = False
         cursor.close()
@@ -344,12 +363,22 @@ log = open(file_name, 'w')
 plant = Plant(root_id, object_id)
 plant.get_materials_from_neosintez()
 plant.create_materials()
+
+print(f'Обработка объекта Неосинтез id: {plant.neosintez_id} Адепт id{plant.adept_object_id}', file=log)
+print(f'Всего сущностей в неосинтез {plant.neosintez_material_amount}.' , end=' ', file=log)
+print(f'Уникальных материалов в неосинтезе {len(plant.materials)}.', end=' ', file=log)
+print(f'Контрольная сумма по количеству {sum(map(lambda x: x.amount, plant.materials))}', file=log)
+
 plant.push_materials_to_adept()
+
+print(f'Количество существующих в адепт {len(tuple(filter(lambda x: x.exist, plant.materials)))}', file=log)
+print(f'Время работы {datetime.now() - start_time}', file=log)
 
 
 
 Plant.ADEPT.close()
 log.close()
 
+print(plant.neosintez_material_amount)
 print(len(plant.materials))
 print(datetime.now() - start_time)
