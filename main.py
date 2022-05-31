@@ -27,6 +27,7 @@ title_attribute_id = '6d0e274e-1a09-eb11-9110-005056b6948b'
 name_attribute_id = '10548523-4356-ec11-911a-005056b6948b'
 amount_attribute_id = 'fdde6847-c6cf-ea11-9110-005056b6948b'
 
+only_not_weldable = False
 weldable_types =[
     'Кольцо',
     'Заглушка',
@@ -184,7 +185,7 @@ class Plant:
         for material in self.materials:
 
             material.exist_in_adept(Plant.ADEPT)
-            if material.exist or material.attributes['type'] in weldable_types:
+            if material.exist or (only_not_weldable and material.attributes['type'] in weldable_types):
                 continue
 
             line = Line(material.line, material.title)
